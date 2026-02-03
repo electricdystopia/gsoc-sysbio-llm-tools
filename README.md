@@ -9,8 +9,6 @@ The dominant open standards for LLM tool usage currently are the Model Context P
 
 GEMs, like all formal models, have large potentials as curated, focused organism databases, as well as hypothesis generating oracles. Unlike with LLMs, their "responses" are fundamentally deterministic and mechanistic, grounded in knowledge. Their accessibility and usability however is severely limited by the sheer complexity and number of tools and databases involved. Furthermore, the idiosyncratic nature of lines of inquiry into a model usually means each analysis is (at least partially) as unique a gem as the GEM it investigates.
 
-Describe the current state of the project and the main problem or issue being addressed by the proposed idea. Details should include links and references. 
-
 ### Goal
 In this project, LLMs are not supposed to replace systems biology modeling, but to lower the cost of doing it correctly.
 
