@@ -17,7 +17,7 @@ In this project, LLMs are not supposed to replace systems biology modeling, but 
 - COBRApy
 - MEMOTE
 - [refineGEMs](https://github.com/draeger-lab/refinegems)
-- [Neo4JSBML](github.com/brsynth/neo4jsbml?tab=readme-ov-file)
+- [Neo4JSBML](https://github.com/brsynth/neo4jsbml?tab=readme-ov-file)
 - Cytoscape
 
 2. A portable project setup (docker-compose.yml in case of MCP, clonable repo in case of skills + Neo4J database and MCP container setup) is made available, to enable users to start using these tools as a framework for interacting with GEMs using LLMs with minimal setup.
