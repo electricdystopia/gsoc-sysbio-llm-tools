@@ -17,3 +17,6 @@ def apply_layout(network_id: int, layout: str = "force-directed") -> dict:
         f"{CYTOSCAPE_URL}/apply/layouts/{layout}/{network_id}"
     )
     return {"status": resp.status_code}
+
+if __name__ == "__main__":
+    mcp.run()
