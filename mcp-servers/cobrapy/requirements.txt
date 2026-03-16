@@ -1,0 +1,4 @@
+fastmcp
+cobra
+requests
+python-libsbml

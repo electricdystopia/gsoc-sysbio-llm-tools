@@ -153,4 +153,4 @@ def run_memote_test(sbml_path: str, test_name: str) -> dict:
 
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(transport="http", port=8000)

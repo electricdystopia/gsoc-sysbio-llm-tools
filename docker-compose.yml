@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+
+  # ── Neo4J graph database ──────────────────────────────────────────────────
+  neo4j:
+    image: neo4j:5
+    container_name: sysbio-neo4j
+    ports:
+      - "7474:7474"   # Browser UI
+      - "7687:7687"   # Bolt protocol
+    environment:
+      NEO4J_AUTH: neo4j/changeme   # Change this before sharing
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - ./models:/models:ro         # mount SBML files read-only
+    healthcheck:
+      test: ["CMD", "neo4j", "status"]
+      interval: 10s
+      retries: 10
+
+  # ── COBRApy MCP server ────────────────────────────────────────────────────
+  cobrapy-mcp:
+    build:
+      context: ./mcp-servers/cobrapy
+      dockerfile: Dockerfile
+    container_name: sysbio-cobrapy
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./models:/models   # shared model directory
+    restart: unless-stopped
+
+  # ── MEMOTE MCP server ─────────────────────────────────────────────────────
+  memote-mcp:
+    build:
+      context: ./mcp-servers/memote
+      dockerfile: Dockerfile
+    container_name: sysbio-memote
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./models:/models
+      - memote_reports:/reports
+    restart: unless-stopped
+
+  # ── CarveMe MCP server ────────────────────────────────────────────────────
+  carveme-mcp:
+    build:
+      context: ./mcp-servers/carveme
+      dockerfile: Dockerfile
+    container_name: sysbio-carveme
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./models:/models
+      - ./genomes:/genomes
+    restart: unless-stopped
+
+  # ── Cytoscape MCP server ──────────────────────────────────────────────────
+  # Note: Cytoscape itself is a desktop app — it must run on the HOST machine.
+  # This server just wraps its REST API, so it runs outside Docker.
+  # If you want to containerize it, use cytoscape/cytoscape-desktop Docker image.
+  cytoscape-mcp:
+    build:
+      context: ./mcp-servers/cytoscape
+      dockerfile: Dockerfile
+    container_name: sysbio-cytoscape
+    ports:
+      - "8004:8000"
+    environment:
+      CYTOSCAPE_URL: "http://host.docker.internal:1234/v1"  # points to host Cytoscape
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  memote_reports:

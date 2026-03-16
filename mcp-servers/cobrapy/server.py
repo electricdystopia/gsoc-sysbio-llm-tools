@@ -59,4 +59,4 @@ def knock_out_gene(model_id: str, gene_id: str) -> dict:
         }
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(transport="http", port=8000)
