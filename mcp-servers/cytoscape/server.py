@@ -19,4 +19,8 @@ def apply_layout(network_id: int, layout: str = "force-directed") -> dict:
     return {"status": resp.status_code}
 
 if __name__ == "__main__":
-    mcp.run(transport="http", port=8000)
+    mcp.run(
+        transport="http",
+        host="0.0.0.0",
+        port=8000
+    )
