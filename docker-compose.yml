@@ -1,27 +1,26 @@
-version: "3.9"
-
 services:
 
-  # ── Neo4J graph database ──────────────────────────────────────────────────
+  # ── Neo4J ──────────────────────────────────────────────────────────────────
   neo4j:
     image: neo4j:5
     container_name: sysbio-neo4j
     ports:
-      - "7474:7474"   # Browser UI
-      - "7687:7687"   # Bolt protocol
+      - "7474:7474"
+      - "7687:7687"
     environment:
-      NEO4J_AUTH: neo4j/changeme   # Change this before sharing
+      NEO4J_AUTH: "${NEO4J_USER}/${NEO4J_PASSWORD}"
       NEO4J_PLUGINS: '["apoc"]'
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
-      - ./models:/models:ro         # mount SBML files read-only
+      - ./models:/models:ro
     healthcheck:
-      test: ["CMD", "neo4j", "status"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:7474"]
       interval: 10s
-      retries: 10
+      retries: 12
+      start_period: 30s
 
-  # ── COBRApy MCP server ────────────────────────────────────────────────────
+  # ── COBRApy MCP ────────────────────────────────────────────────────────────
   cobrapy-mcp:
     build:
       context: ./mcp-servers/cobrapy
@@ -30,10 +29,19 @@ services:
     ports:
       - "8001:8000"
     volumes:
-      - ./models:/models   # shared model directory
+      - ./models:/models
+    environment:
+      MODELS_DIR: "/models"
     restart: unless-stopped
+    healthcheck:
+      # TCP socket check — works regardless of HTTP/MCP protocol details
+      test: ["CMD", "python", "-c",
+             "import socket; s=socket.socket(); s.settimeout(3); s.connect(('localhost',8000)); s.close()"]
+      interval: 10s
+      retries: 6
+      start_period: 15s
 
-  # ── MEMOTE MCP server ─────────────────────────────────────────────────────
+  # ── MEMOTE MCP ─────────────────────────────────────────────────────────────
   memote-mcp:
     build:
       context: ./mcp-servers/memote
@@ -44,9 +52,17 @@ services:
     volumes:
       - ./models:/models
       - memote_reports:/reports
+    environment:
+      MODELS_DIR: "/models"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import socket; s=socket.socket(); s.settimeout(3); s.connect(('localhost',8000)); s.close()"]
+      interval: 10s
+      retries: 6
+      start_period: 15s
 
-  # ── CarveMe MCP server ────────────────────────────────────────────────────
+  # ── CarveMe MCP ────────────────────────────────────────────────────────────
   carveme-mcp:
     build:
       context: ./mcp-servers/carveme
@@ -57,12 +73,17 @@ services:
     volumes:
       - ./models:/models
       - ./genomes:/genomes
+    environment:
+      MODELS_DIR: "/models"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import socket; s=socket.socket(); s.settimeout(3); s.connect(('localhost',8000)); s.close()"]
+      interval: 10s
+      retries: 6
+      start_period: 15s
 
-  # ── Cytoscape MCP server ──────────────────────────────────────────────────
-  # Note: Cytoscape itself is a desktop app — it must run on the HOST machine.
-  # This server just wraps its REST API, so it runs outside Docker.
-  # If you want to containerize it, use cytoscape/cytoscape-desktop Docker image.
+  # ── Cytoscape MCP ──────────────────────────────────────────────────────────
   cytoscape-mcp:
     build:
       context: ./mcp-servers/cytoscape
@@ -71,7 +92,31 @@ services:
     ports:
       - "8004:8000"
     environment:
-      CYTOSCAPE_URL: "http://host.docker.internal:1234/v1"  # points to host Cytoscape
+      CYTOSCAPE_URL: "http://host.docker.internal:1234/v1"
+    restart: unless-stopped
+
+  # ── Orchestrator ───────────────────────────────────────────────────────────
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    container_name: sysbio-orchestrator
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/models
+    environment:
+      MODELS_DIR: "/models"
+      COBRAPY_URL: "http://cobrapy-mcp:8000/mcp"
+      MEMOTE_URL:  "http://memote-mcp:8000/mcp"
+      CARVEME_URL: "http://carveme-mcp:8000/mcp"
+    depends_on:
+      cobrapy-mcp:
+        condition: service_healthy
+      memote-mcp:
+        condition: service_healthy
+      carveme-mcp:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
